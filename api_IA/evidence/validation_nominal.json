@@ -1,0 +1,47 @@
+{
+  "base_url": "http://127.0.0.1:8765",
+  "validation_scope": "runtime_baseline_with_mocked_ocr",
+  "openai_enabled": false,
+  "tesseract_enabled": false,
+  "runtime_config": {
+    "ocr_max_concurrency": 4,
+    "ocr_queue_timeout_seconds": 2.0,
+    "ocr_request_timeout_seconds": 5.0,
+    "load_test_sleep_seconds": 0.2
+  },
+  "load_tests": [
+    {
+      "scenario": "nominal",
+      "endpoint": "/v1/ocr",
+      "requests": 40,
+      "client_concurrency": 4,
+      "completed": 40,
+      "successful": 40,
+      "http_errors": 0,
+      "app_errors": 0,
+      "status_codes": {
+        "200": 40
+      },
+      "total_seconds": 2.091,
+      "throughput_rps": 19.13,
+      "latency_ms": {
+        "min": 203.04,
+        "avg": 205.63,
+        "p50": 205.04,
+        "p95": 209.73,
+        "p99": 210.2,
+        "max": 210.5
+      },
+      "sample_response": {
+        "estado": "ok",
+        "texto_extraido": "LOAD TEST OCR",
+        "debe_reintentar": false
+      }
+    }
+  ],
+  "availability_check": {
+    "server_reachable": true,
+    "health_status_code": 503,
+    "health_note": "El health queda degradado en este escenario por usar OPENAI_API_KEY de prueba; no afecta el endpoint /v1/ocr del load_test_server"
+  }
+}

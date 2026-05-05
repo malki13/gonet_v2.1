@@ -1,0 +1,77 @@
+{
+  "validation_scope": "runtime_guardrails_with_mocked_ocr",
+  "openai_enabled": false,
+  "tesseract_enabled": false,
+  "checks": [
+    {
+      "scenario": "saturation",
+      "base_url": "http://127.0.0.1:8766",
+      "endpoint": "/v1/ocr",
+      "runtime_config": {
+        "ocr_max_concurrency": 2,
+        "ocr_queue_timeout_seconds": 0.1,
+        "ocr_request_timeout_seconds": 5.0,
+        "load_test_sleep_seconds": 0.25
+      },
+      "requests": 100,
+      "client_concurrency": 20,
+      "completed": 100,
+      "successful": 6,
+      "http_errors": 0,
+      "app_errors": 94,
+      "status_codes": {
+        "200": 6,
+        "429": 94
+      },
+      "total_seconds": 0.807,
+      "throughput_rps": 123.95,
+      "latency_ms": {
+        "min": 103.22,
+        "avg": 121.92,
+        "p50": 108.28,
+        "p95": 265.13,
+        "p99": 327.91,
+        "max": 327.98
+      },
+      "expected_api_code": "service_busy",
+      "assertion_passed": true
+    },
+    {
+      "scenario": "timeout",
+      "base_url": "http://127.0.0.1:8767",
+      "endpoint": "/v1/ocr",
+      "runtime_config": {
+        "ocr_max_concurrency": 2,
+        "ocr_queue_timeout_seconds": 2.0,
+        "ocr_request_timeout_seconds": 0.1,
+        "load_test_sleep_seconds": 0.25
+      },
+      "requests": 20,
+      "client_concurrency": 4,
+      "completed": 20,
+      "successful": 0,
+      "http_errors": 0,
+      "app_errors": 20,
+      "status_codes": {
+        "504": 20
+      },
+      "total_seconds": 1.059,
+      "throughput_rps": 18.88,
+      "latency_ms": {
+        "min": 107.37,
+        "avg": 195.05,
+        "p50": 204.38,
+        "p95": 207.66,
+        "p99": 207.96,
+        "max": 208.04
+      },
+      "expected_api_code": "processing_timeout",
+      "assertion_passed": true
+    }
+  ],
+  "automated_suite": {
+    "command": "pytest -q",
+    "passed": 43,
+    "failed": 0
+  }
+}

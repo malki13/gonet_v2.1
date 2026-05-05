@@ -1,0 +1,58 @@
+services:
+  redis:
+    profiles:
+      - local-redis
+    image: redis:7-alpine
+    ports:
+      - "${OCR_QUEUE_REDIS_BIND_PORT:-6380}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ocr:
+    build: .
+    ports:
+      - "5001:5000"
+    environment:
+      - QUART_DEBUG=${QUART_DEBUG:-false}
+      - WEB_CONCURRENCY=${WEB_CONCURRENCY:-2}
+      - OCR_MAX_CONCURRENCY=${OCR_MAX_CONCURRENCY:-4}
+      - OCR_QUEUE_TIMEOUT_SECONDS=${OCR_QUEUE_TIMEOUT_SECONDS:-2}
+      - OCR_REQUEST_TIMEOUT_SECONDS=${OCR_REQUEST_TIMEOUT_SECONDS:-300}
+      - NOTIFY_MAX_CONCURRENCY=${NOTIFY_MAX_CONCURRENCY:-8}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_OCR_MODEL=${OPENAI_OCR_MODEL:-gpt-4.1-mini}
+      - OPENAI_OCR_DETAIL=${OPENAI_OCR_DETAIL:-high}
+      - OCR_LOG_CONTENT=${OCR_LOG_CONTENT:-true}
+      - OCR_LOG_TEXT_LIMIT=${OCR_LOG_TEXT_LIMIT:-4000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./tessdata:/usr/share/tesseract-ocr/4.00/tessdata
+
+  ocr_queue_worker:
+    build: .
+    command: ["python", "-m", "src.ocr_service.workers.queue_consumer"]
+    environment:
+      - OCR_QUEUE_REDIS_URL=${OCR_QUEUE_REDIS_URL:-redis://host.docker.internal:6379/0}
+      - OCR_QUEUE_NAME=${OCR_QUEUE_NAME:-ocr:jobs}
+      - OCR_PROCESSING_QUEUE_NAME=${OCR_PROCESSING_QUEUE_NAME:-ocr:jobs:processing}
+      - OCR_QUEUE_BLOCK_SECONDS=${OCR_QUEUE_BLOCK_SECONDS:-5}
+      - OCR_JOB_MAX_ATTEMPTS=${OCR_JOB_MAX_ATTEMPTS:-3}
+      - OCR_WORKER_THREADS=${OCR_WORKER_THREADS:-4}
+      - OCR_MAX_CONCURRENCY=${OCR_MAX_CONCURRENCY:-4}
+      - OCR_REQUEST_TIMEOUT_SECONDS=${OCR_REQUEST_TIMEOUT_SECONDS:-300}
+      - OCR_CALLBACK_TIMEOUT_SECONDS=${OCR_CALLBACK_TIMEOUT_SECONDS:-30}
+      - OCR_CALLBACK_URL=${OCR_CALLBACK_URL:-http://host.docker.internal:8010/v1/ocr/callback}
+      - OCR_CALLBACK_SECRET=${OCR_CALLBACK_SECRET:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_OCR_MODEL=${OPENAI_OCR_MODEL:-gpt-4.1-mini}
+      - OPENAI_OCR_DETAIL=${OPENAI_OCR_DETAIL:-high}
+      - OCR_LOG_CONTENT=${OCR_LOG_CONTENT:-true}
+      - OCR_LOG_TEXT_LIMIT=${OCR_LOG_TEXT_LIMIT:-4000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./tessdata:/usr/share/tesseract-ocr/4.00/tessdata
